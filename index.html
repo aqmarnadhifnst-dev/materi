@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penyimpanan Materi Pelajaran</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #6b8cbc;
+            --accent-color: #ff7e5f;
+            --light-color: #f5f7fa;
+            --dark-color: #2c3e50;
+            --success-color: #2ecc71;
+            --danger-color: #e74c3c;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--light-color);
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 1.5rem 0;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem 0;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .search-box {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+        
+        .search-box input {
+            width: 100%;
+            padding: 0.8rem 1rem 0.8rem 2.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .search-box i {
+            position: absolute;
+            left: 0.8rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #777;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 0.6rem 1.2rem;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .filter-btn:hover, .filter-btn.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+        
+        .add-material-btn {
+            background-color: var(--success-color);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+        
+        .add-material-btn:hover {
+            background-color: #27ae60;
+        }
+        
+        .materials-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .material-card {
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+        
+        .material-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .material-image {
+            height: 160px;
+            background-color: #e0e7ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+            color: var(--primary-color);
+        }
+        
+        .material-content {
+            padding: 1.5rem;
+        }
+        
+        .material-title {
+            font-size: 1.3rem;
+            margin-bottom: 0.5rem;
+            color: var(--dark-color);
+        }
+        
+        .material-description {
+            color: #666;
+            margin-bottom: 1rem;
+            font-size: 0.95rem;
+        }
+        
+        .material-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 1rem;
+        }
+        
+        .material-category {
+            background-color: #e0e7ff;
+            color: var(--primary-color);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .material-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .material-link {
+            display: inline-block;
+            background-color: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            padding: 0.6rem 1.2rem;
+            border-radius: 4px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+            text-align: center;
+            flex: 1;
+        }
+        
+        .material-link:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .delete-btn {
+            background-color: var(--danger-color);
+            color: white;
+            border: none;
+            padding: 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        .delete-btn:hover {
+            background-color: #c0392b;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .modal h2 {
+            margin-bottom: 1.5rem;
+            color: var(--dark-color);
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .form-group textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+        
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background-color: var(--secondary-color);
+        }
+        
+        .btn-secondary {
+            background-color: #ddd;
+            color: var(--dark-color);
+        }
+        
+        .btn-secondary:hover {
+            background-color: #ccc;
+        }
+        
+        footer {
+            background-color: var(--dark-color);
+            color: white;
+            text-align: center;
+            padding: 1.5rem 0;
+            margin-top: 3rem;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            font-size: 1.2rem;
+            color: #666;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-box {
+                min-width: 100%;
+            }
+            
+            .materials-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .material-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Penyimpanan Materi Pelajaran</h1>
+            <p class="subtitle">Koleksi materi pelajaran yang tersimpan di GitHub</p>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="controls">
+            <div class="search-box">
+                <i>🔍</i>
+                <input type="text" id="searchInput" placeholder="Cari materi...">
+            </div>
+            
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-filter="all">Semua</button>
+                <button class="filter-btn" data-filter="matematika">Matematika</button>
+                <button class="filter-btn" data-filter="fisika">Fisika</button>
+                <button class="filter-btn" data-filter="kimia">Kimia</button>
+                <button class="filter-btn" data-filter="biologi">Biologi</button>
+                <button class="filter-btn" data-filter="sejarah">Sejarah</button>
+            </div>
+            
+            <button class="add-material-btn" id="addMaterialBtn">Tambah Materi</button>
+        </div>
+        
+        <div class="materials-grid" id="materialsContainer">
+            <div class="loading">Memuat materi...</div>
+        </div>
+    </div>
+    
+    <!-- Modal untuk menambah/mengedit materi -->
+    <div class="modal" id="materialModal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Tambah Materi Baru</h2>
+            <form id="materialForm">
+                <div class="form-group">
+                    <label for="materialTitle">Judul Materi</label>
+                    <input type="text" id="materialTitle" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="materialDescription">Deskripsi</label>
+                    <textarea id="materialDescription" required></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label for="materialCategory">Kategori</label>
+                    <select id="materialCategory" required>
+                        <option value="">Pilih Kategori</option>
+                        <option value="matematika">Matematika</option>
+                        <option value="fisika">Fisika</option>
+                        <option value="kimia">Kimia</option>
+                        <option value="biologi">Biologi</option>
+                        <option value="sejarah">Sejarah</option>
+                        <option value="lainnya">Lainnya</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="materialGithubUrl">URL GitHub</label>
+                    <input type="url" id="materialGithubUrl" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="materialIcon">Ikon (opsional)</label>
+                    <input type="text" id="materialIcon" placeholder="Contoh: 📚, ∫, ⚛">
+                </div>
+                
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Batal</button>
+                    <button type="submit" class="btn btn-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <footer>
+        <div class="container">
+            <p>&copy; 2023 Penyimpanan Materi Pelajaran. Semua hak cipta dilindungi.</p>
+        </div>
+    </footer>
+    
+    <script>
+        // Konfigurasi Supabase
+        const SUPABASE_URL = 'https://your-project.supabase.co'; // Ganti dengan URL Supabase Anda
+        const SUPABASE_ANON_KEY = 'your-anon-key'; // Ganti dengan anon key Supabase Anda
+        
+        // Inisialisasi Supabase client
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        // Variabel global
+        let materials = [];
+        let editingMaterialId = null;
+        
+        // Fungsi untuk memuat materi dari Supabase
+        async function loadMaterials() {
+            try {
+                const { data, error } = await supabase
+                    .from('materials')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+                
+                if (error) throw error;
+                
+                materials = data || [];
+                displayMaterials(materials);
+            } catch (error) {
+                console.error('Error loading materials:', error);
+                alert('Terjadi kesalahan saat memuat materi.');
+            }
+        }
+        
+        // Fungsi untuk menampilkan materi
+        function displayMaterials(materialsToShow) {
+            const container = document.getElementById('materialsContainer');
+            
+            if (materialsToShow.length === 0) {
+                container.innerHTML = '<p style="grid-column: 1/-1; text-align: center; padding: 2rem;">Tidak ada materi yang ditemukan.</p>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            materialsToShow.forEach(material => {
+                const card = document.createElement('div');
+                card.className = 'material-card';
+                card.innerHTML = `
+                    <div class="material-image">
+                        ${material.icon || '📚'}
+                    </div>
+                    <div class="material-content">
+                        <h3 class="material-title">${material.title}</h3>
+                        <p class="material-description">${material.description}</p>
+                        <div class="material-meta">
+                            <span>Diperbarui: ${formatDate(material.updated_at)}</span>
+                            <span class="material-category">${material.category}</span>
+                        </div>
+                        <div class="material-actions">
+                            <a href="${material.github_url}" target="_blank" class="material-link">Lihat di GitHub</a>
+                            <button class="delete-btn" data-id="${material.id}">Hapus</button>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+            
+            // Tambahkan event listener untuk tombol hapus
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const materialId = e.target.getAttribute('data-id');
+                    deleteMaterial(materialId);
+                });
+            });
+        }
+        
+        // Fungsi untuk memformat tanggal
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('id-ID', options);
+        }
+        
+        // Fungsi untuk menambah materi
+        async function addMaterial(materialData) {
+            try {
+                const { data, error } = await supabase
+                    .from('materials')
+                    .insert([materialData])
+                    .select();
+                
+                if (error) throw error;
+                
+                // Tambahkan materi ke array lokal
+                materials.unshift(data[0]);
+                displayMaterials(materials);
+                closeModal();
+                
+                alert('Materi berhasil ditambahkan!');
+            } catch (error) {
+                console.error('Error adding material:', error);
+                alert('Terjadi kesalahan saat menambah materi.');
+            }
+        }
+        
+        // Fungsi untuk menghapus materi
+        async function deleteMaterial(materialId) {
+            if (!confirm('Apakah Anda yakin ingin menghapus materi ini?')) {
+                return;
+            }
+            
+            try {
+                const { error } = await supabase
+                    .from('materials')
+                    .delete()
+                    .eq('id', materialId);
+                
+                if (error) throw error;
+                
+                // Hapus materi dari array lokal
+                materials = materials.filter(material => material.id !== materialId);
+                displayMaterials(materials);
+                
+                alert('Materi berhasil dihapus!');
+            } catch (error) {
+                console.error('Error deleting material:', error);
+                alert('Terjadi kesalahan saat menghapus materi.');
+            }
+        }
+        
+        // Fungsi untuk memfilter materi berdasarkan kategori
+        function filterMaterials(category) {
+            if (category === 'all') {
+                return materials;
+            }
+            return materials.filter(material => material.category === category);
+        }
+        
+        // Fungsi untuk mencari materi berdasarkan kata kunci
+        function searchMaterials(keyword) {
+            if (!keyword) {
+                return materials;
+            }
+            
+            const lowerKeyword = keyword.toLowerCase();
+            return materials.filter(material => 
+                material.title.toLowerCase().includes(lowerKeyword) || 
+                material.description.toLowerCase().includes(lowerKeyword) ||
+                material.category.toLowerCase().includes(lowerKeyword)
+            );
+        }
+        
+        // Fungsi untuk membuka modal
+        function openModal() {
+            document.getElementById('materialModal').style.display = 'flex';
+        }
+        
+        // Fungsi untuk menutup modal
+        function closeModal() {
+            document.getElementById('materialModal').style.display = 'none';
+            document.getElementById('materialForm').reset();
+            editingMaterialId = null;
+            document.getElementById('modalTitle').textContent = 'Tambah Materi Baru';
+        }
+        
+        // Inisialisasi
+        document.addEventListener('DOMContentLoaded', () => {
+            // Muat materi dari Supabase
+            loadMaterials();
+            
+            // Setup filter buttons
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            filterButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    // Hapus kelas active dari semua tombol
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    // Tambahkan kelas active ke tombol yang diklik
+                    button.classList.add('active');
+                    
+                    // Filter materi berdasarkan kategori
+                    const category = button.getAttribute('data-filter');
+                    const filteredMaterials = filterMaterials(category);
+                    displayMaterials(filteredMaterials);
+                });
+            });
+            
+            // Setup pencarian
+            const searchInput = document.getElementById('searchInput');
+            searchInput.addEventListener('input', () => {
+                const keyword = searchInput.value;
+                const searchedMaterials = searchMaterials(keyword);
+                
+                // Dapatkan kategori aktif
+                const activeFilter = document.querySelector('.filter-btn.active').getAttribute('data-filter');
+                
+                // Gabungkan filter pencarian dan kategori
+                let finalMaterials = searchedMaterials;
+                if (activeFilter !== 'all') {
+                    finalMaterials = searchedMaterials.filter(material => material.category === activeFilter);
+                }
+                
+                displayMaterials(finalMaterials);
+            });
+            
+            // Setup tombol tambah materi
+            document.getElementById('addMaterialBtn').addEventListener('click', openModal);
+            
+            // Setup tombol batal di modal
+            document.getElementById('cancelBtn').addEventListener('click', closeModal);
+            
+            // Setup form tambah materi
+            document.getElementById('materialForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                
+                const materialData = {
+                    title: document.getElementById('materialTitle').value,
+                    description: document.getElementById('materialDescription').value,
+                    category: document.getElementById('materialCategory').value,
+                    github_url: document.getElementById('materialGithubUrl').value,
+                    icon: document.getElementById('materialIcon').value || '📚'
+                };
+                
+                addMaterial(materialData);
+            });
+            
+            // Tutup modal ketika klik di luar konten modal
+            document.getElementById('materialModal').addEventListener('click', (e) => {
+                if (e.target.id === 'materialModal') {
+                    closeModal();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
