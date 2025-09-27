@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Penyimpanan Materi Pelajaran</title>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary-color: #4a6fa5;
@@ -319,6 +319,31 @@
             color: #666;
         }
         
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 4px;
+            color: white;
+            font-weight: 600;
+            z-index: 1001;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            background-color: var(--success-color);
+        }
+        
+        .notification.error {
+            background-color: var(--danger-color);
+        }
+        
         @media (max-width: 768px) {
             .controls {
                 flex-direction: column;
@@ -342,8 +367,8 @@
 <body>
     <header>
         <div class="container">
-            <h1>Penyimpanan Materi Pelajaran</h1>
-            <p class="subtitle">Koleksi materi pelajaran yang tersimpan di GitHub</p>
+            <h1>📚 Penyimpanan Materi Pelajaran</h1>
+            <p class="subtitle">Kelola dan simpan semua materi pelajaran Anda di satu tempat</p>
         </div>
     </header>
     
@@ -360,10 +385,13 @@
                 <button class="filter-btn" data-filter="fisika">Fisika</button>
                 <button class="filter-btn" data-filter="kimia">Kimia</button>
                 <button class="filter-btn" data-filter="biologi">Biologi</button>
+                <button class="filter-btn" data-filter="bahasa">Bahasa</button>
                 <button class="filter-btn" data-filter="sejarah">Sejarah</button>
             </div>
             
-            <button class="add-material-btn" id="addMaterialBtn">Tambah Materi</button>
+            <button class="add-material-btn" id="addMaterialBtn">
+                <span>+</span> Tambah Materi
+            </button>
         </div>
         
         <div class="materials-grid" id="materialsContainer">
@@ -371,47 +399,49 @@
         </div>
     </div>
     
-    <!-- Modal untuk menambah/mengedit materi -->
+    <!-- Modal untuk menambah materi -->
     <div class="modal" id="materialModal">
         <div class="modal-content">
-            <h2 id="modalTitle">Tambah Materi Baru</h2>
+            <h2 id="modalTitle">➕ Tambah Materi Baru</h2>
             <form id="materialForm">
                 <div class="form-group">
-                    <label for="materialTitle">Judul Materi</label>
-                    <input type="text" id="materialTitle" required>
+                    <label for="materialTitle">📖 Judul Materi</label>
+                    <input type="text" id="materialTitle" placeholder="Contoh: Kalkulus Dasar" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="materialDescription">Deskripsi</label>
-                    <textarea id="materialDescription" required></textarea>
+                    <label for="materialDescription">📝 Deskripsi Materi</label>
+                    <textarea id="materialDescription" placeholder="Jelaskan secara singkat tentang materi ini..." required></textarea>
                 </div>
                 
                 <div class="form-group">
-                    <label for="materialCategory">Kategori</label>
+                    <label for="materialCategory">🏷️ Kategori</label>
                     <select id="materialCategory" required>
                         <option value="">Pilih Kategori</option>
                         <option value="matematika">Matematika</option>
                         <option value="fisika">Fisika</option>
                         <option value="kimia">Kimia</option>
                         <option value="biologi">Biologi</option>
+                        <option value="bahasa">Bahasa</option>
                         <option value="sejarah">Sejarah</option>
                         <option value="lainnya">Lainnya</option>
                     </select>
                 </div>
                 
                 <div class="form-group">
-                    <label for="materialGithubUrl">URL GitHub</label>
-                    <input type="url" id="materialGithubUrl" required>
+                    <label for="materialGithubUrl">🔗 URL GitHub</label>
+                    <input type="url" id="materialGithubUrl" placeholder="https://github.com/username/repository" required>
                 </div>
                 
                 <div class="form-group">
-                    <label for="materialIcon">Ikon (opsional)</label>
-                    <input type="text" id="materialIcon" placeholder="Contoh: 📚, ∫, ⚛">
+                    <label for="materialIcon">🎨 Ikon (opsional)</label>
+                    <input type="text" id="materialIcon" placeholder="Contoh: 📚, ∫, ⚛, 🧪">
+                    <small style="color: #666; font-size: 0.8rem;">Gunakan emoji atau simbol untuk merepresentasikan materi</small>
                 </div>
                 
                 <div class="form-actions">
                     <button type="button" class="btn btn-secondary" id="cancelBtn">Batal</button>
-                    <button type="submit" class="btn btn-primary">Simpan</button>
+                    <button type="submit" class="btn btn-primary">💾 Simpan Materi</button>
                 </div>
             </form>
         </div>
@@ -419,14 +449,14 @@
     
     <footer>
         <div class="container">
-            <p>&copy; 2023 Penyimpanan Materi Pelajaran. Semua hak cipta dilindungi.</p>
+            <p>© 2024 Penyimpanan Materi Pelajaran. Dibuat dengan ❤️ untuk pendidikan.</p>
         </div>
     </footer>
-    
+
     <script>
-        // Konfigurasi Supabase
-        const SUPABASE_URL = 'https://xwyxhoyudfbmsasgsfdg.supabase.co'; // Ganti dengan URL Supabase Anda
-        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3eXhob3l1ZGZibXNhc2dzZmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5NDk1NjksImV4cCI6MjA3NDUyNTU2OX0.ARwDL3RNH6lr4pY3KGjFMuYz_LoM_ySSdBuRQt2K0wQ'; // Ganti dengan anon key Supabase Anda
+        // Konfigurasi Supabase - SUDAH DIISI DENGAN DATA ANDA
+        const SUPABASE_URL = 'https://xwyxhoyudfbmsasgsfdg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Inh3eXhob3l1ZGZibXNhc2dzZmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5NDk1NjksImV4cCI6MjA3NDUyNTU2OX0.ARwDL3RNH6lr4pY3KGjFMuYz_LoM_ySSdBuRQt2K0wQ';
         
         // Inisialisasi Supabase client
         const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -434,6 +464,25 @@
         // Variabel global
         let materials = [];
         let editingMaterialId = null;
+        
+        // Fungsi untuk menampilkan notifikasi
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.add('show');
+            }, 100);
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
         
         // Fungsi untuk memuat materi dari Supabase
         async function loadMaterials() {
@@ -447,9 +496,20 @@
                 
                 materials = data || [];
                 displayMaterials(materials);
+                
+                if (materials.length === 0) {
+                    document.getElementById('materialsContainer').innerHTML = `
+                        <div style="grid-column: 1/-1; text-align: center; padding: 3rem;">
+                            <div style="font-size: 4rem; margin-bottom: 1rem;">📚</div>
+                            <h3 style="margin-bottom: 1rem;">Belum ada materi</h3>
+                            <p style="color: #666; margin-bottom: 2rem;">Klik tombol "Tambah Materi" untuk menambah materi pertama Anda</p>
+                            <button class="add-material-btn" onclick="openModal()">+ Tambah Materi Pertama</button>
+                        </div>
+                    `;
+                }
             } catch (error) {
                 console.error('Error loading materials:', error);
-                alert('Terjadi kesalahan saat memuat materi.');
+                showNotification('Terjadi kesalahan saat memuat materi', 'error');
             }
         }
         
@@ -475,12 +535,12 @@
                         <h3 class="material-title">${material.title}</h3>
                         <p class="material-description">${material.description}</p>
                         <div class="material-meta">
-                            <span>Diperbarui: ${formatDate(material.updated_at)}</span>
-                            <span class="material-category">${material.category}</span>
+                            <span>📅 ${formatDate(material.updated_at)}</span>
+                            <span class="material-category">${getCategoryIcon(material.category)} ${material.category}</span>
                         </div>
                         <div class="material-actions">
-                            <a href="${material.github_url}" target="_blank" class="material-link">Lihat di GitHub</a>
-                            <button class="delete-btn" data-id="${material.id}">Hapus</button>
+                            <a href="${material.github_url}" target="_blank" class="material-link">🔗 Buka di GitHub</a>
+                            <button class="delete-btn" data-id="${material.id}" title="Hapus materi">🗑️</button>
                         </div>
                     </div>
                 `;
@@ -496,9 +556,23 @@
             });
         }
         
+        // Fungsi untuk mendapatkan ikon kategori
+        function getCategoryIcon(category) {
+            const icons = {
+                'matematika': '∫',
+                'fisika': '⚛',
+                'kimia': '🧪',
+                'biologi': '🔬',
+                'bahasa': '📖',
+                'sejarah': '📜',
+                'lainnya': '📚'
+            };
+            return icons[category] || '📚';
+        }
+        
         // Fungsi untuk memformat tanggal
         function formatDate(dateString) {
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
             return new Date(dateString).toLocaleDateString('id-ID', options);
         }
         
@@ -517,10 +591,10 @@
                 displayMaterials(materials);
                 closeModal();
                 
-                alert('Materi berhasil ditambahkan!');
+                showNotification('Materi berhasil ditambahkan!');
             } catch (error) {
                 console.error('Error adding material:', error);
-                alert('Terjadi kesalahan saat menambah materi.');
+                showNotification('Terjadi kesalahan saat menambah materi', 'error');
             }
         }
         
@@ -542,10 +616,10 @@
                 materials = materials.filter(material => material.id !== materialId);
                 displayMaterials(materials);
                 
-                alert('Materi berhasil dihapus!');
+                showNotification('Materi berhasil dihapus!');
             } catch (error) {
                 console.error('Error deleting material:', error);
-                alert('Terjadi kesalahan saat menghapus materi.');
+                showNotification('Terjadi kesalahan saat menghapus materi', 'error');
             }
         }
         
@@ -574,6 +648,7 @@
         // Fungsi untuk membuka modal
         function openModal() {
             document.getElementById('materialModal').style.display = 'flex';
+            document.getElementById('materialTitle').focus();
         }
         
         // Fungsi untuk menutup modal
@@ -581,7 +656,7 @@
             document.getElementById('materialModal').style.display = 'none';
             document.getElementById('materialForm').reset();
             editingMaterialId = null;
-            document.getElementById('modalTitle').textContent = 'Tambah Materi Baru';
+            document.getElementById('modalTitle').textContent = '➕ Tambah Materi Baru';
         }
         
         // Inisialisasi
@@ -612,15 +687,18 @@
                 const searchedMaterials = searchMaterials(keyword);
                 
                 // Dapatkan kategori aktif
-                const activeFilter = document.querySelector('.filter-btn.active').getAttribute('data-filter');
-                
-                // Gabungkan filter pencarian dan kategori
-                let finalMaterials = searchedMaterials;
-                if (activeFilter !== 'all') {
-                    finalMaterials = searchedMaterials.filter(material => material.category === activeFilter);
+                const activeFilter = document.querySelector('.filter-btn.active');
+                if (activeFilter) {
+                    const category = activeFilter.getAttribute('data-filter');
+                    
+                    // Gabungkan filter pencarian dan kategori
+                    let finalMaterials = searchedMaterials;
+                    if (category !== 'all') {
+                        finalMaterials = searchedMaterials.filter(material => material.category === category);
+                    }
+                    
+                    displayMaterials(finalMaterials);
                 }
-                
-                displayMaterials(finalMaterials);
             });
             
             // Setup tombol tambah materi
@@ -648,6 +726,13 @@
             document.getElementById('materialModal').addEventListener('click', (e) => {
                 if (e.target.id === 'materialModal') {
                     closeModal();
+                }
+            });
+            
+            // Enter untuk submit form
+            document.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && document.getElementById('materialModal').style.display === 'flex') {
+                    document.getElementById('materialForm').dispatchEvent(new Event('submit'));
                 }
             });
         });
